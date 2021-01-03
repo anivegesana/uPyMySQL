@@ -16,8 +16,8 @@ try:
 except ImportError:
     import uerrno as errno
 
-if not 'EINTR' in dir(errno): #This error number appears to have been removed from some ports in micropython
-    errno.EINTR=4
+#This error number appears to have been removed from some ports in micropython
+_EINTR = errno.EINTR if 'EINTR' in dir(errno) else 4
 
 #from functools import partial
 try:
@@ -142,7 +142,7 @@ def _scramble(password, message):
     stage1 = sha_new(password).digest()
     stage2 = sha_new(stage1).digest()
     s = sha_new()
-    s.update(message[:SCRAMBLE_LENGTH]) 
+    s.update(message[:SCRAMBLE_LENGTH])
     s.update(stage2)
     result = s.digest()
     return _my_crypt(result, stage1)
@@ -602,7 +602,7 @@ class Connection(object):
         self._local_infile = bool(local_infile)
         if self._local_infile:
             client_flag |= CLIENT.LOCAL_FILES
-        
+
         self.ssl = False
         if ssl:
             if not SSL_ENABLED:
@@ -768,7 +768,7 @@ class Connection(object):
 
     def escape(self, obj, mapping=None):
         """Escape whatever value you pass to it.
-        
+
         Non-standard, for internal use; do not use this in your applications.
         """
         if isinstance(obj, str_type):
@@ -777,7 +777,7 @@ class Connection(object):
 
     def literal(self, obj):
         """Alias for escape()
-        
+
         Non-standard, for internal use; do not use this in your applications.
         """
         return self.escape(obj, self.encoders)
@@ -880,11 +880,11 @@ class Connection(object):
                         #except (OSError, IOError) as e:
                         except OSError as e:
                             print(e)
-                            #if e.errno == errno.EINTR:
+                            #if e.errno == _EINTR:
                             #uPython strips most of the information out of the error for a simple test representation
                             #This parses out the errno from the str representation but is likely not very robust
                             #and will probably fail in the future potentially masking the original error
-                            if int(str(e).split()[1][:-1]) == errno.EINTR:
+                            if int(str(e).split()[1][:-1]) == _EINTR:
                                 continue
                             raise
                     self.host_info = "socket %s:%d" % (self.host, self.port)
@@ -990,7 +990,7 @@ class Connection(object):
                 data = self._rfile.read(num_bytes)
                 break
             except (IOError, OSError) as e:
-                if e.errno == errno.EINTR:
+                if e.errno == _EINTR:
                     continue
                 self._force_close()
                 raise SyntaxError('err.OperationalError( \
@@ -1470,7 +1470,7 @@ class MySQLResult(object):
                     # This behavior is different from TEXT / BLOB.
                     # We should decode result by connection encoding regardless charsetnr.
                     # See https://github.com/PyMySQL/PyMySQL/issues/488
-                    encoding = conn_encoding  # SELECT CAST(... AS JSON) 
+                    encoding = conn_encoding  # SELECT CAST(... AS JSON)
                 elif field_type in TEXT_TYPES:
                     if field.charsetnr == 63:  # binary
                         # TEXTs with charset=binary means BINARY types.
